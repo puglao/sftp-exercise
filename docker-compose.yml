@@ -1,0 +1,35 @@
+services:
+  init:
+    image: busybox
+    volumes:
+      - ./sftp1/:/tmp/sftp1
+    command: >
+      sh -c "
+        if [ ! -d "/tmp/sftp1" ]; then mkdir -p /tmp/sftp1; fi;
+        rm -rf /tmp/sftp1/*;
+        depth=$$(( ( RANDOM % 5 ) + 1 ));
+        dir="/tmp/sftp1"
+        for i in $$(seq 1 $$depth); do
+          dir="$$dir/depth$$i";
+          mkdir -p $$dir;
+          for j in $$(seq 1 $$(( ( RANDOM % 5 ) + 1 ))); do
+            echo $$(head -c 12 /dev/urandom | base64) > $$dir/$$i-$$j.txt;
+          done;
+        done;
+      "
+  sftp1:
+    image: atmoz/sftp
+    volumes:
+      - ./sftp1/:/home/foo
+    ports:
+      - "2222:22"
+    command: foo:pass:1001
+    depends_on:
+      - init    
+  sftp2:
+    image: atmoz/sftp
+    volumes:
+      - ./sftp2/:/home/bar
+    ports:
+      - "2223:22"
+    command: bar:pass:1001
